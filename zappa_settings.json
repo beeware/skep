@@ -1,0 +1,10 @@
+{
+    "dev": {
+        "app_function": "skep.zappa.app",
+        "aws_region": "us-west-2",
+        "profile_name": "beeware",
+        "project_name": "skep",
+        "runtime": "python3.7",
+        "s3_bucket": "skep-beeware"
+    }
+}

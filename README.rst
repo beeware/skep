@@ -24,7 +24,7 @@ requirements, and run the app::
     $ python -m venv venv
     $ source venv/bin/activate
     $ pip install -r requirements/dev.txt
-    (venv) $ FLASK_ENV=development FLASK_APP=skep flask run
+    (venv) $ FLASK_ENV=development FLASK_APP=skep.skep flask run
 
 This will start a server at `http://127.0.0.1:5000/
 <http://127.0.0.1:5000/>`__.
@@ -35,6 +35,13 @@ Running tests
 To run the skep test suite::
 
     $ pytest
+
+Deploying
+---------
+
+To update the development deployment::
+
+    $ zappa update dev
 
 Colophon
 --------
