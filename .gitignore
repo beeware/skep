@@ -1,0 +1,15 @@
+*.pyc
+*~
+.*.sw[op]
+*.egg-info
+/dist
+/build
+docs/_build/
+distribute-*
+.DS_Store
+.python-version
+.pytest_cache
+venv/
+.vscode/
+.eggs/
+/local

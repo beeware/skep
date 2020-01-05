@@ -1,0 +1,50 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  beefore:
+    name: Pre-test checks
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        task: ['pycodestyle']
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip setuptools
+        pip install -r requirements/dev.txt
+        pip install beefore
+    - name: Run Beefore checks
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        beefore --username github-actions --repository ${{ github.repository }} --pull-request ${{ github.event.number }} --commit ${{ github.event.pull_request.head.sha }} ${{ matrix.task }} .
+
+  test:
+    name: Test (3.8)
+    needs: beefore
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip setuptools
+        pip install -r requirements/dev.txt
+        pip install pytest-tldr
+    - name: Test
+      run: |
+        pytest
