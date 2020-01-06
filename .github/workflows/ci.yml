@@ -9,6 +9,7 @@ jobs:
   beefore:
     name: Pre-test checks
     runs-on: ubuntu-latest
+    if: github.event_name != 'push'
     strategy:
       max-parallel: 4
       matrix:
@@ -46,5 +47,8 @@ jobs:
         pip install -r requirements/dev.txt
         pip install pytest-tldr
     - name: Test
+      env:
+        AWS_ACCESS_KEY_ID=AKIAX7VXJHRLKP7L6NHV
+        AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
         pytest
