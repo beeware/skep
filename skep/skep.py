@@ -1,12 +1,18 @@
 import os
 
-from flask import Flask
+import boto3
+from flask import Flask, Response, abort, redirect, request
+
+from skep import platforms
 
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
+        S3_BUCKET='briefcase-support',
+        S3_REGION='us-west-2',
+        STREAMING_CHUNK_SIZE=1024,
     )
 
     if test_config is None:
@@ -22,8 +28,95 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    # Utility methods
+    def generate(result):
+        "Read an S3 object in chunks, yielding the content in bytes"
+        for chunk in iter(lambda: result['Body'].read(app.config['STREAMING_CHUNK_SIZE']), b''):
+            yield chunk
+
+    # Views
     @app.route('/')
     def hello():
-        return 'Hello, World!'
+        return """
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Cutive">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Roboto">
+    <style>
+        img {
+            float: left;
+        }
+        h1 {
+            font-family: 'Cutive', serif;
+            padding-top: 2em;
+        }
+        p {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <img src="https://beeware.org/project/projects/tools/briefcase/briefcase.png" alt="Briefcase logo">
+    <h1>Briefcase Support Repository</h1>
+    <p>
+        This is the support repository for
+        <a href="https://briefcase.readthedocs.io">Briefcase</a>,
+        the <a href="https://beeware.org/">BeeWare Project's</a> Python
+        application packaging tool.
+    </p>
+    <p>
+        For more details, see the <a href="https://briefcase.readthedocs.io">Briefcase
+        documentation</a>. You may want to start with the
+        <a href="https://briefcase.readthedocs.io">tutorial</a>.
+    </p>
+</body>
+"""
+
+    @app.route("/python", methods=['GET'])
+    def support_package():
+        # Extract arguments from the URL.
+        py_version = request.args.get('version')
+        platform = request.args.get('platform')
+        host_arch = request.args.get('arch')
+
+        if py_version is None:
+            abort(400, "No Python version requested")
+        if platform is None:
+            abort(400, "No platform requested")
+
+        if platform == 'windows':
+            try:
+                return redirect(
+                    platforms.windows_support_url(version=py_version, host_arch=host_arch),
+                    code=302
+                )
+            except ValueError:
+                abort(404)
+            except RuntimeError:
+                abort(502)
+
+        else:
+            # Get an S3 client
+            s3 = boto3.client('s3', region_name=app.config['S3_REGION'])
+
+            try:
+                filename, s3_object = platforms.support_object(
+                    s3,
+                    bucket=app.config['S3_BUCKET'],
+                    platform=platform,
+                    version=py_version,
+                    host_arch=host_arch,
+                )
+
+                # Return a streaming response.
+                return Response(
+                    generate(s3_object),
+                    mimetype='application/tar+gzip',
+                    headers={
+                        'Content-Disposition': 'attachment;filename=' + filename
+                    }
+                )
+            except ValueError:
+                abort(404)
 
     return app
