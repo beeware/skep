@@ -48,7 +48,7 @@ jobs:
         pip install pytest-tldr
     - name: Test
       env:
-        AWS_ACCESS_KEY_ID=AKIAX7VXJHRLKP7L6NHV
-        AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_ACCESS_KEY_ID: AKIAX7VXJHRLKP7L6NHV
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
         pytest
