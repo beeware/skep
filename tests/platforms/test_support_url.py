@@ -6,9 +6,10 @@ from botocore.stub import Stubber
 
 from skep.platforms import support_url
 
+
 @pytest.fixture
 def s3():
-    session = boto3.Session(profile_name='test')
+    session = boto3.Session()
     return session.client('s3')
 
 
