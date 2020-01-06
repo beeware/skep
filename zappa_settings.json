@@ -5,6 +5,8 @@
         "profile_name": "beeware",
         "project_name": "skep",
         "runtime": "python3.7",
-        "s3_bucket": "skep-beeware"
+        "s3_bucket": "skep-beeware",
+        "certificate_arn": "arn:aws:acm:us-east-1:549066456150:certificate/9baf83ae-df15-4921-b950-8b296f92d5ff",
+        "domain": "dev.briefcase-support.org"
     }
 }
