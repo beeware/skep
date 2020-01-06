@@ -1,7 +1,7 @@
 import os
 
 import boto3
-from flask import Flask, Response, abort, redirect, request
+from flask import Flask, abort, redirect, request
 
 from skep import platforms
 
