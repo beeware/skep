@@ -39,9 +39,17 @@ To run the skep test suite::
 Deploying
 ---------
 
-To update the development deployment::
+Deploying to the official repositories requires a developer login on the
+BeeWare AWS account. You need API credentials named ``beeware`` configured.
+
+To update the development deployment (https://dev.briefcase-support.org)::
 
     $ zappa update dev
+
+To update the production deployment (https://briefcase-support.org)::
+
+    $ zappa update prod
+
 
 Colophon
 --------
