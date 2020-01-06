@@ -28,12 +28,6 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Utility methods
-    def generate(result):
-        "Read an S3 object in chunks, yielding the content in bytes"
-        for chunk in iter(lambda: result['Body'].read(app.config['STREAMING_CHUNK_SIZE']), b''):
-            yield chunk
-
     # Views
     @app.route('/')
     def hello():
@@ -84,39 +78,25 @@ def create_app(test_config=None):
         if platform is None:
             abort(400, "No platform requested")
 
-        if platform == 'windows':
-            try:
-                return redirect(
-                    platforms.windows_support_url(version=py_version, host_arch=host_arch),
-                    code=302
+        try:
+            if platform == 'windows':
+                url = platforms.windows_support_url(
+                    version=py_version,
+                    host_arch=host_arch
                 )
-            except ValueError:
-                abort(404)
-            except RuntimeError:
-                abort(502)
-
-        else:
-            # Get an S3 client
-            s3 = boto3.client('s3', region_name=app.config['S3_REGION'])
-
-            try:
-                filename, s3_object = platforms.support_object(
-                    s3,
+            else:
+                url = platforms.support_url(
+                    boto3.client('s3', region_name=app.config['S3_REGION']),
                     bucket=app.config['S3_BUCKET'],
                     platform=platform,
                     version=py_version,
                     host_arch=host_arch,
                 )
 
-                # Return a streaming response.
-                return Response(
-                    generate(s3_object),
-                    mimetype='application/tar+gzip',
-                    headers={
-                        'Content-Disposition': 'attachment;filename=' + filename
-                    }
-                )
-            except ValueError:
-                abort(404)
+            return redirect(url, code=302)
+        except ValueError:
+            abort(404)
+        except RuntimeError:
+            abort(502)
 
     return app

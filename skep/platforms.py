@@ -41,7 +41,7 @@ def windows_support_url(version, host_arch):
     return url.format(version=version, micro=micro, host_arch=host_arch)
 
 
-def support_object(s3, bucket, platform, version, host_arch):
+def support_url(s3, bucket, platform, version, host_arch):
     if host_arch is None:
         prefix = f'python/{version}/{platform}/'
     else:
@@ -64,8 +64,11 @@ def support_object(s3, bucket, platform, version, host_arch):
     if top_build is None:
         raise ValueError()
 
-    # Get the object that is the most recent build
-    s3_object = s3.get_object(Bucket=bucket, Key=top_build)
-    filename = top_build.rsplit('/')[-1]
-
-    return filename, s3_object
+    return s3.generate_presigned_url(
+        'get_object',
+        Params={
+            'Bucket': bucket,
+            'Key': top_build
+        },
+        ExpiresIn=60
+    )

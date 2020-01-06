@@ -87,19 +87,19 @@ def test_windows_python_org_failure(test_client, monkeypatch):
 
 def test_support_missing(test_client, monkeypatch):
     "If no support package can be found, a 404 is raised"
-    mock_support_object = mock.MagicMock()
-    mock_support_object.side_effecet = ValueError
+    mock_support_url = mock.MagicMock()
+    mock_support_url.side_effect = ValueError
 
     mock_s3_client = mock.MagicMock()
     mock_s3 = mock.MagicMock()
     mock_s3_client.return_value = mock_s3
 
-    monkeypatch.setattr(platforms, 'support_object', mock_support_object)
+    monkeypatch.setattr(platforms, 'support_url', mock_support_url)
     monkeypatch.setattr(boto3, 'client', mock_s3_client)
 
     response = test_client.get('/python?version=3.7&platform=linux')
 
-    mock_support_object.assert_called_with(
+    mock_support_url.assert_called_with(
         mock_s3,
         bucket='briefcase-support',
         version='3.7',
@@ -112,20 +112,19 @@ def test_support_missing(test_client, monkeypatch):
 
 def test_support_exists(test_client, monkeypatch):
     "If a support package can be found, it is returned"
-    mock_support_object = mock.MagicMock()
-    mock_obj = mock.MagicMock()
-    mock_support_object.return_value = 'support_file.tar.gz', mock_obj
+    mock_support_url = mock.MagicMock()
+    mock_support_url.return_value = 'https://example.com/support_file.tar.gz'
 
     mock_s3_client = mock.MagicMock()
     mock_s3 = mock.MagicMock()
     mock_s3_client.return_value = mock_s3
 
-    monkeypatch.setattr(platforms, 'support_object', mock_support_object)
+    monkeypatch.setattr(platforms, 'support_url', mock_support_url)
     monkeypatch.setattr(boto3, 'client', mock_s3_client)
 
     response = test_client.get('/python?version=3.7&platform=linux')
 
-    mock_support_object.assert_called_with(
+    mock_support_url.assert_called_with(
         mock_s3,
         bucket='briefcase-support',
         version='3.7',
@@ -133,27 +132,25 @@ def test_support_exists(test_client, monkeypatch):
         host_arch=None,
     )
 
-    assert response.status_code == 200
-    assert response.mimetype == 'application/tar+gzip'
-    assert response.headers['Content-Disposition'] == 'attachment;filename=support_file.tar.gz'
+    assert response.status_code == 302
+    assert response.location == 'https://example.com/support_file.tar.gz'
 
 
 def test_support_with_arch_exists(test_client, monkeypatch):
     "If a support package for an architecture can be found, it is returned"
-    mock_support_object = mock.MagicMock()
-    mock_obj = mock.MagicMock()
-    mock_support_object.return_value = 'support_file.tar.gz', mock_obj
+    mock_support_url = mock.MagicMock()
+    mock_support_url.return_value = 'https://example.com/support_file.tar.gz'
 
     mock_s3_client = mock.MagicMock()
     mock_s3 = mock.MagicMock()
     mock_s3_client.return_value = mock_s3
 
-    monkeypatch.setattr(platforms, 'support_object', mock_support_object)
+    monkeypatch.setattr(platforms, 'support_url', mock_support_url)
     monkeypatch.setattr(boto3, 'client', mock_s3_client)
 
     response = test_client.get('/python?version=3.7&platform=linux&arch=amd64')
 
-    mock_support_object.assert_called_with(
+    mock_support_url.assert_called_with(
         mock_s3,
         bucket='briefcase-support',
         version='3.7',
@@ -161,6 +158,5 @@ def test_support_with_arch_exists(test_client, monkeypatch):
         host_arch='amd64',
     )
 
-    assert response.status_code == 200
-    assert response.mimetype == 'application/tar+gzip'
-    assert response.headers['Content-Disposition'] == 'attachment;filename=support_file.tar.gz'
+    assert response.status_code == 302
+    assert response.location == 'https://example.com/support_file.tar.gz'
