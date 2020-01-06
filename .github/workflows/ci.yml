@@ -9,7 +9,6 @@ jobs:
   beefore:
     name: Pre-test checks
     runs-on: ubuntu-latest
-    if: github.event_name != 'push'
     strategy:
       max-parallel: 4
       matrix:
@@ -26,6 +25,7 @@ jobs:
         pip install -r requirements/dev.txt
         pip install beefore
     - name: Run Beefore checks
+      if: github.event_name != 'push'
       env:
         GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
