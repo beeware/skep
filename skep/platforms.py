@@ -5,21 +5,6 @@ def windows_support_url(version, host_arch, revision):
     if host_arch is None:
         host_arch = 'amd64'
 
-    # We can shortcut the process by priming the minor versions
-    # that we already know exist.
-    micro = {
-        '3.5': 4,
-        '3.6': 8,
-        '3.7': 5,
-        '3.8': 2,
-    }.get(version, 0)
-
-    # There are micro versions that are known bad.
-    # Remove them from consideration.
-    known_bad = {
-        '3.7': {7},
-    }.get(version, [])
-
     # The URL for embed packages is known:
     url = (
         'https://www.python.org/ftp/python/{version}.{micro}'
@@ -28,10 +13,26 @@ def windows_support_url(version, host_arch, revision):
 
     if revision:
         # A specific revision has been requested.
+        parts = revision.split('.')
         best_url = url.format(
-            version=version, revision=revision, host_arch=host_arch
+            version=version, micro=parts[0], revision=revision, host_arch=host_arch
         )
     else:
+        # We can shortcut the process by priming the minor versions
+        # that we already know exist.
+        micro = {
+            '3.5': 4,
+            '3.6': 8,
+            '3.7': 5,
+            '3.8': 2,
+        }.get(version, 0)
+
+        # There are micro versions that are known bad.
+        # Remove them from consideration.
+        known_bad = {
+            '3.7': {7},
+        }.get(version, [])
+
         best_url = None
         while True:
             candidate_url = url.format(
