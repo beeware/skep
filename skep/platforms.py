@@ -14,31 +14,62 @@ def windows_support_url(version, host_arch):
             '3.7': 5,
             '3.8': 0,
         }[version]
+
+        # There are micro versions that are known bad.
+        # Remove them from consideration.
+        known_bad = {
+            '3.7': {7},
+        }.get(version, [])
     except KeyError:
         raise ValueError('Unsupported major.minor version')
 
     # The URL for embed packages is known:
     url = (
         'https://www.python.org/ftp/python/{version}.{micro}'
-        '/python-{version}.{micro}-embed-{host_arch}.zip'
+        '/python-{version}.{micro}{post}-embed-{host_arch}.zip'
     )
 
     while True:
-        response = requests.head(
-            url.format(version=version, micro=micro, host_arch=host_arch)
+        candidate_url = url.format(
+            version=version, micro=micro, post='', host_arch=host_arch
         )
 
-        if response.status_code == 404:
-            # Micro version doesn't exist; highest released version
-            # is therefore the previous micro version.
-            micro = micro - 1
-            break
-        elif response.status_code != 200:
-            raise RuntimeError('Problem detecting Windows support package')
+        # If the micro version is in the list of known bad releases,
+        # remove it from consideration.
+        if micro in known_bad:
+            found_candidate = False
+        else:
+            response = requests.head(candidate_url)
+            if response.status_code == 200:
+                found_candidate = True
+            elif response.status_code == 404:
+                found_candidate = False
+            else:
+                raise RuntimeError('Problem detecting Windows support package')
 
+        if found_candidate:
+            best_url = candidate_url
+        else:
+            # No base version; look for a post release.
+            candidate_url = url.format(
+                version=version, micro=micro, post='.post1', host_arch=host_arch
+            )
+            response = requests.head(candidate_url)
+
+            if response.status_code == 200:
+                best_url = candidate_url
+            elif response.status_code == 404:
+                # No micro version candidate, and no post release of
+                # micro version; we've hit the end of our search
+                break
+            else:
+                raise RuntimeError('Problem detecting Windows support package')
+
+        # Try the next micro version.
         micro += 1
 
-    return url.format(version=version, micro=micro, host_arch=host_arch)
+    print("FOUND BEST", best_url)
+    return best_url
 
 
 def support_url(s3, bucket, platform, version, host_arch):
