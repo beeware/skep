@@ -72,6 +72,7 @@ def create_app(test_config=None):
         py_version = request.args.get('version')
         platform = request.args.get('platform')
         host_arch = request.args.get('arch')
+        revision = request.args.get('revision')
 
         if py_version is None:
             abort(400, "No Python version requested")
@@ -82,7 +83,8 @@ def create_app(test_config=None):
             if platform == 'windows':
                 url = platforms.windows_support_url(
                     version=py_version,
-                    host_arch=host_arch
+                    host_arch=host_arch,
+                    revision=revision,
                 )
             else:
                 url = platforms.support_url(
@@ -91,6 +93,7 @@ def create_app(test_config=None):
                     platform=platform,
                     version=py_version,
                     host_arch=host_arch,
+                    revision=revision,
                 )
 
             return redirect(url, code=302)

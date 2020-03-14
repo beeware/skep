@@ -9,7 +9,7 @@ from skep.platforms import windows_support_url
 def test_unsupported_version():
     "If the major.minor version isn't supported, raise an error"
     with pytest.raises(ValueError):
-        windows_support_url(version='2.7', host_arch=None)
+        windows_support_url(version='2.7', host_arch=None, revision=None)
 
 
 def test_find_version_default_arch(monkeypatch):
@@ -29,7 +29,7 @@ def test_find_version_default_arch(monkeypatch):
     ]
     monkeypatch.setattr(requests, 'head', mock_head)
 
-    url = windows_support_url(version='3.7', host_arch=None)
+    url = windows_support_url(version='3.7', host_arch=None, revision=None)
 
     # Three URLs were tested
     mock_head.assert_has_calls([
@@ -54,7 +54,7 @@ def test_find_version_explicit_arch(monkeypatch):
     ]
     monkeypatch.setattr(requests, 'head', mock_head)
 
-    url = windows_support_url(version='3.7', host_arch='win32')
+    url = windows_support_url(version='3.7', host_arch='win32', revision=None)
 
     # Three URLs were tested
     mock_head.assert_has_calls([
@@ -75,7 +75,7 @@ def test_server_error(monkeypatch):
     monkeypatch.setattr(requests, 'head', mock_head)
 
     with pytest.raises(RuntimeError):
-        windows_support_url(version='3.7', host_arch=None)
+        windows_support_url(version='3.7', host_arch=None, revision=None)
 
     # One URL was tested
     mock_head.assert_has_calls([

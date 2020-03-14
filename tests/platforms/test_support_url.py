@@ -42,6 +42,7 @@ def test_single_match(s3):
         platform='tester',
         version='3.X',
         host_arch=None,
+        revision=None,
     )
 
     # Check the S3 calls have been exhausted
@@ -87,6 +88,7 @@ def test_single_match_with_arch(s3):
         platform='tester',
         version='3.X',
         host_arch='dummy',
+        revision=None,
     )
 
     # Check the S3 calls have been exhausted
@@ -135,6 +137,7 @@ def test_multiple_match(s3):
         platform='tester',
         version='3.X',
         host_arch=None,
+        revision=None,
     )
 
     # Check the S3 calls have been exhausted
@@ -178,6 +181,132 @@ def test_no_match(s3):
             platform='tester',
             version='3.X',
             host_arch=None,
+            revision=None,
+        )
+
+    # Check the S3 calls have been exhausted
+    stub_s3.assert_no_pending_responses()
+
+
+def test_revision_match(s3):
+    "If a revision is provided, only an exact match is returned"
+    stub_s3 = Stubber(s3)
+
+    # Add the expected request/responses from S3
+    stub_s3.add_response(
+        method='list_objects_v2',
+        expected_params={
+            'Bucket': 'briefcase-support',
+            'Prefix': 'python/3.X/tester/'
+        },
+        service_response={
+            'Contents': [
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b11.tar.gz'},
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b8.tar.gz'},
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b9.tar.gz'},
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b10.tar.gz'},
+            ],
+            'KeyCount': 4,
+        }
+    )
+
+    # We've set up all the expected S3 responses, so activate the stub
+    stub_s3.activate()
+
+    # Retrieve the property, retrieving the support package URL.
+    url = support_url(
+        s3,
+        bucket='briefcase-support',
+        platform='tester',
+        version='3.X',
+        host_arch=None,
+        revision='b8',
+    )
+
+    # Check the S3 calls have been exhausted
+    stub_s3.assert_no_pending_responses()
+
+    # The URL that was returned is as expected.
+    parsed_url = urlparse(url)
+    assert parsed_url.scheme == 'https'
+    assert parsed_url.netloc == 'briefcase-support.s3.amazonaws.com'
+    assert parsed_url.path == '/python/3.X/tester/Python-3.X-tester-support.b8.tar.gz'
+    query = dict(parse_qsl(parsed_url.query))
+    assert 'Expires' in query
+    assert 'AWSAccessKeyId' in query
+    assert 'Signature' in query
+
+
+def test_no_revision_match(s3):
+    "If a revision is provided, but that version doesn't exist, an error is returned"
+    stub_s3 = Stubber(s3)
+
+    # Add the expected request/responses from S3
+    stub_s3.add_response(
+        method='list_objects_v2',
+        expected_params={
+            'Bucket': 'briefcase-support',
+            'Prefix': 'python/3.X/tester/'
+        },
+        service_response={
+            'Contents': [
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b11.tar.gz'},
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b8.tar.gz'},
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b9.tar.gz'},
+                {'Key': 'python/3.X/tester/Python-3.X-tester-support.b10.tar.gz'},
+            ],
+            'KeyCount': 4,
+        }
+    )
+
+    # We've set up all the expected S3 responses, so activate the stub
+    stub_s3.activate()
+
+    # Retrieve the property, retrieving the support package URL.
+
+    # Retrieve the property, retrieving the support package URL.
+    with pytest.raises(ValueError):
+        support_url(
+            s3,
+            bucket='briefcase-support',
+            platform='tester',
+            version='3.X',
+            host_arch=None,
+            revision='b42',
+        )
+
+    # Check the S3 calls have been exhausted
+    stub_s3.assert_no_pending_responses()
+
+
+def test_no_revisions(s3):
+    "If there are no files for the version, and a revision is requested, raise an error"
+    stub_s3 = Stubber(s3)
+
+    # Add the expected request/responses from S3
+    stub_s3.add_response(
+        method='list_objects_v2',
+        expected_params={
+            'Bucket': 'briefcase-support',
+            'Prefix': 'python/3.X/tester/'
+        },
+        service_response={
+            'KeyCount': 0,
+        }
+    )
+
+    # We've set up all the expected S3 responses, so activate the stub
+    stub_s3.activate()
+
+    # Retrieve the property, retrieving the support package URL.
+    with pytest.raises(ValueError):
+        support_url(
+            s3,
+            bucket='briefcase-support',
+            platform='tester',
+            version='3.X',
+            host_arch=None,
+            revision='b8',
         )
 
     # Check the S3 calls have been exhausted
