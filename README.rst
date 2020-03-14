@@ -34,7 +34,7 @@ Running tests
 
 To run the skep test suite::
 
-    $ pytest
+    $ AWS_PROFILE=beeware pytest
 
 Deploying
 ---------
