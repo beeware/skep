@@ -311,3 +311,50 @@ def test_no_revisions(s3):
 
     # Check the S3 calls have been exhausted
     stub_s3.assert_no_pending_responses()
+
+
+def test_zip_match(s3):
+    "If a match for an zipfile exists, it is returned"
+    stub_s3 = Stubber(s3)
+
+    # Add the expected request/responses from S3
+    stub_s3.add_response(
+        method='list_objects_v2',
+        expected_params={
+            'Bucket': 'briefcase-support',
+            'Prefix': 'python/3.X/ziptest/'
+        },
+        service_response={
+            'Contents': [
+                {'Key': 'python/3.X/ziptest/Python-3.X-ZipTest-support.b1.zip'}
+            ],
+            'KeyCount': 1,
+        }
+    )
+
+    # We've set up all the expected S3 responses, so activate the stub
+    stub_s3.activate()
+
+    # Retrieve the property, retrieving the support package URL.
+    # Android uses .zip format, so the extension is different.
+    url = support_url(
+        s3,
+        bucket='briefcase-support',
+        platform='ziptest',
+        version='3.X',
+        host_arch=None,
+        revision=None,
+    )
+
+    # Check the S3 calls have been exhausted
+    stub_s3.assert_no_pending_responses()
+
+    # The URL that was returned is as expected.
+    parsed_url = urlparse(url)
+    assert parsed_url.scheme == 'https'
+    assert parsed_url.netloc == 'briefcase-support.s3.amazonaws.com'
+    assert parsed_url.path == '/python/3.X/ziptest/Python-3.X-ZipTest-support.b1.zip'
+    query = dict(parse_qsl(parsed_url.query))
+    assert 'Expires' in query
+    assert 'AWSAccessKeyId' in query
+    assert 'Signature' in query
