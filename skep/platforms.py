@@ -97,11 +97,17 @@ def support_url(s3, bucket, platform, version, host_arch, revision):
     top_build = None
     for page in s3.get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix=prefix):
         for item in page.get('Contents', []):
-            build_number = int(
-                item['Key'].split('.')[-3].lstrip('b')
-            )
+            # Filename is either foo.b1.zip or foo.b1.tar.gz
+            # Find the "b1" part of the name.
+            key_parts = item['Key'].split('.')
+            if key_parts[-1] == 'zip':
+                build_str = key_parts[-2]
+            else:
+                build_str = key_parts[-3]
+
+            build_number = int(build_str.lstrip('b'))
             if revision:
-                if f'b{build_number}' == revision:
+                if build_str == revision:
                     top_build = item['Key']
                     break
             else:
