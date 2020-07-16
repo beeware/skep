@@ -32,7 +32,9 @@ This will start a server at `http://127.0.0.1:5000/
 Running tests
 -------------
 
-To run the skep test suite::
+To run the skep test suite, your currently active AWS credentials must have
+access to S3 APIs. You may need to add an `AWS_PROFILE` definition to your
+environment::
 
     $ AWS_PROFILE=beeware pytest
 
