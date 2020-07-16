@@ -31,6 +31,7 @@ def windows_support_url(version, host_arch, revision):
         # Remove them from consideration.
         known_bad = {
             '3.7': {7},
+            '3.8': {4},
         }.get(version, [])
 
         best_url = None

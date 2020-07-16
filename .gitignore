@@ -13,3 +13,4 @@ venv/
 .vscode/
 .eggs/
 /local
+.envrc
