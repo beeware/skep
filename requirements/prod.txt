@@ -1,2 +1,4 @@
-Flask==1.1.1
-zappa==0.48.2
+Flask==2.1.1
+jinja2==3.1.1
+Werkzeug==2.1.1
+zappa==0.54.1

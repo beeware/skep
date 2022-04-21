@@ -14,3 +14,4 @@ venv/
 .eggs/
 /local
 .envrc
+.tox/

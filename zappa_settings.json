@@ -4,7 +4,7 @@
         "aws_region": "us-west-2",
         "profile_name": "beeware",
         "project_name": "skep",
-        "runtime": "python3.7",
+        "runtime": "python3.9",
         "s3_bucket": "skep-beeware",
         "certificate_arn": "arn:aws:acm:us-east-1:549066456150:certificate/9baf83ae-df15-4921-b950-8b296f92d5ff",
         "domain": "dev.briefcase-support.org"
@@ -14,7 +14,7 @@
         "aws_region": "us-west-2",
         "profile_name": "beeware",
         "project_name": "skep",
-        "runtime": "python3.7",
+        "runtime": "python3.9",
         "s3_bucket": "skep-beeware",
         "certificate_arn": "arn:aws:acm:us-east-1:549066456150:certificate/fa6b5bbd-ca41-4b31-a680-bfe6b4e4f565",
         "domain": "briefcase-support.org"
