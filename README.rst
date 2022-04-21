@@ -5,9 +5,9 @@ Skep
    :target: https://github.com/beeware/skep/actions
    :alt: Build Status
 
-.. image:: https://badges.gitter.im/beeware/general.svg
-   :target: https://gitter.im/beeware/general
-   :alt: Chat on Gitter
+.. image:: https://img.shields.io/discord/836455665257021440?label=Discord%20Chat&logo=discord&style=plastic
+   :target: https://beeware.org/bee/chat/
+   :alt: Discord server
 
 Skep is a lightweight proxy for serving `Briefcase
 <https://github.com/beeware/briefcase>`__ support files.
