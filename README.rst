@@ -1,3 +1,9 @@
+** NOTE: This service was used by Briefcase v0.3.0 - v0.3.9. However, in Briefcase
+v0.3.10, templates locked their preferred support package. This service will be
+retained for support of legacy Briefcase versions, but the behavior is now "static",
+returning the support pacakges that were current as of the release of v0.3.10. Once
+traffic has dropped off, this service will be retired.**
+
 Skep
 ====
 
