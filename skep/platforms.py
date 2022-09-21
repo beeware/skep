@@ -1,4 +1,3 @@
-import requests
 
 
 def windows_support_url(version, host_arch, revision):

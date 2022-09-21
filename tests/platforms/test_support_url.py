@@ -2,7 +2,6 @@ from urllib.parse import urlparse, parse_qsl
 
 import boto3
 import pytest
-from botocore.stub import Stubber
 
 from skep.platforms import support_url
 
@@ -54,7 +53,6 @@ def test_valid_support_url(s3, platform, version, host_arch, revision, expected_
     assert 'Expires' in query
     assert 'AWSAccessKeyId' in query
     assert 'Signature' in query
-
 
 
 @pytest.mark.parametrize(
@@ -115,8 +113,8 @@ def test_valid_support_url(s3, platform, version, host_arch, revision, expected_
 
     ]
 )
-def test_valid_support_url(s3, platform, version, host_arch, revision):
-    "The support URLs in place at the time of the release of Briefcase v0.3.10 can be returned"
+def test_invalid_support_url(s3, platform, version, host_arch, revision):
+    "Bad support URL requests are rejected."
     # Retrieve the property, retrieving the support package URL.
     with pytest.raises(ValueError):
         support_url(
