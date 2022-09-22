@@ -1,4 +1,3 @@
-import requests
 
 
 def windows_support_url(version, host_arch, revision):
@@ -18,105 +17,82 @@ def windows_support_url(version, host_arch, revision):
             version=version, micro=parts[0], revision=revision, host_arch=host_arch
         )
     else:
-        # We can shortcut the process by priming the minor versions
-        # that we already know exist.
-        micro = {
-            '3.5': 4,
-            '3.6': 8,
-            '3.7': 5,
-            '3.8': 2,
-        }.get(version, 0)
+        # Lock the most recent known versions as of the pre-release of Briefcase 0.3.10
+        try:
+            micro = {
+                '3.5': 4,
+                '3.6': 8,
+                '3.7': 9,
+                '3.8': 10,
+                '3.9': 13,
+                '3.10': 7,
+            }[version]
 
-        # There are micro versions that are known bad.
-        # Remove them from consideration.
-        known_bad = {
-            '3.7': {7},
-            '3.8': {4},
-        }.get(version, [])
-
-        best_url = None
-        while True:
-            candidate_url = url.format(
+            best_url = url.format(
                 version=version,
                 micro=micro,
                 revision=micro,
                 host_arch=host_arch,
             )
-
-            # If the micro version is in the list of known bad releases,
-            # remove it from consideration.
-            if micro in known_bad:
-                found_candidate = False
-            else:
-                response = requests.head(candidate_url)
-                if response.status_code == 200:
-                    found_candidate = True
-                elif response.status_code == 404:
-                    found_candidate = False
-                else:
-                    raise RuntimeError('Problem detecting Windows support package')
-
-            if found_candidate:
-                best_url = candidate_url
-            else:
-                # No base version; look for a post release.
-                candidate_url = url.format(
-                    version=version,
-                    micro=micro,
-                    revision=f'{micro}.post1',
-                    host_arch=host_arch,
-                )
-                response = requests.head(candidate_url)
-
-                if response.status_code == 200:
-                    best_url = candidate_url
-                elif response.status_code == 404:
-                    # No micro version candidate, and no post release of
-                    # micro version; we've hit the end of our search
-                    break
-                else:
-                    raise RuntimeError('Problem detecting Windows support package')
-
-            # Try the next micro version.
-            micro += 1
-
-    if best_url is None:
-        raise ValueError('Unsupported major.minor version')
+        except KeyError:
+            raise ValueError('Unsupported major.minor version')
 
     return best_url
 
 
 def support_url(s3, bucket, platform, version, host_arch, revision):
-    if host_arch is None:
-        prefix = f'python/{version}/{platform}/'
-    else:
-        prefix = f'python/{version}/{platform}/{host_arch}/'
+    try:
+        if host_arch is None:
+            prefix = f'python/{version}/{platform}'
 
-    # List all the objects in the bucket.
-    # Look for the highest build number.
-    top_build_number = 0
-    top_build = None
-    for page in s3.get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix=prefix):
-        for item in page.get('Contents', []):
-            # Filename is either foo.b1.zip or foo.b1.tar.gz
-            # Find the "b1" part of the name.
-            key_parts = item['Key'].split('.')
-            if key_parts[-1] == 'zip':
-                build_str = key_parts[-2]
+            if platform == "android":
+                best_revision = {
+                    '3.6': 3,
+                    '3.7': 9,
+                    '3.8': 5,
+                    '3.9': 3,
+                    '3.10': 2,
+                }[version]
+                if revision is None:
+                    revision = best_revision
+
+                top_build = f"{prefix}/Python-{version}-Android-support.b{revision}.zip"
+            elif platform in {"iOS", "macOS"}:
+                best_revision = {
+                    '3.5': 12,
+                    '3.6': 14,
+                    '3.7': 9,
+                    '3.8': 9,
+                    '3.9': 7,
+                    '3.10': 3,
+                }[version]
+                if revision is None:
+                    revision = best_revision
+
+                top_build = f"{prefix}/Python-{version}-{platform}-support.b{revision}.tar.gz"
             else:
-                build_str = key_parts[-3]
+                top_build = None
+        elif platform == "linux" and host_arch == "x86_64":
+            prefix = f'python/{version}/{platform}/{host_arch}'
 
-            build_number = int(build_str.lstrip('b'))
-            if revision:
-                if build_str == revision:
-                    top_build = item['Key']
-                    break
-            else:
-                if build_number > top_build_number:
-                    top_build_number = build_number
-                    top_build = item['Key']
+            best_revision = {
+                '3.5': 2,
+                '3.6': 4,
+                '3.7': 6,
+                '3.8': 6,
+                '3.9': 4,
+                '3.10': 3,
+            }[version]
+            if revision is None:
+                revision = best_revision
 
-    # If we didn't find at least one file, raise 404.
+            top_build = f"{prefix}/Python-{version}-linux-{host_arch}-support.b{revision}.tar.gz"
+        else:
+            top_build = None
+    except KeyError:
+        top_build = None
+
+    # If we didn't find a file, raise 404.
     if top_build is None:
         raise ValueError()
 
